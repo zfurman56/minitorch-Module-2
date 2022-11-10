@@ -22,7 +22,13 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    vals = list(vals)
+    f_value = f(*vals)
+
+    vals[arg] += epsilon
+    delta_f_value = f(*vals)
+
+    return (delta_f_value - f_value) / epsilon
 
 
 variable_count = 1
@@ -60,7 +66,29 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    sorted_vars = []
+    temp_marks = set()
+    perm_marks = set()
+
+    def visit(var):
+        if var.unique_id in perm_marks:
+            return
+        if var.unique_id in temp_marks:
+            raise Exception("Topological sort failed - graph has cycle!")
+
+        temp_marks.add(var.unique_id)
+
+        for parent in var.parents:
+            visit(parent)
+
+        temp_marks.remove(var.unique_id)
+        perm_marks.add(var.unique_id)
+        sorted_vars.append(var)
+
+    visit(variable)
+    sorted_vars.reverse()
+
+    return sorted_vars
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -74,7 +102,19 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+
+    derivs = {variable.unique_id: deriv}
+    variables = topological_sort(variable)
+
+    for var in variables:
+        if var.is_leaf():
+            var.accumulate_derivative(derivs[var.unique_id])
+        else:
+            for v, d in var.chain_rule(derivs[var.unique_id]):
+                if v.unique_id not in derivs.keys():
+                    derivs[v.unique_id] = d
+                else:
+                    derivs[v.unique_id] += d
 
 
 @dataclass
